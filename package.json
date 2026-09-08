@@ -1,0 +1,16 @@
+{
+  "name": "qmem",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.3.10",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vite build",
+    "tauri": "tauri",
+    "test": "bun test",
+    "test:native": "bun run build && bun tests/native-smoke.js"
+  },
+  "dependencies": { "@tauri-apps/api": "^2.0.0" },
+  "devDependencies": { "@tauri-apps/cli": "^2.0.0", "vite": "^7.0.0" }
+}
