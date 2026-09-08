@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>QMem</title>
+  </head>
+  <body>
+    <textarea id="editor" aria-label="メモ本文" autofocus spellcheck="false"></textarea>
+    <dialog id="search-dialog" aria-label="過去メモ検索">
+      <input id="query" type="search" aria-label="本文を検索" placeholder="本文を検索" autocomplete="off" />
+      <div id="results" aria-label="検索結果"></div>
+    </dialog>
+    <p id="error" role="alert" hidden></p>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
