@@ -3,6 +3,8 @@
 開く → 書く → 自動保存、だけのTauri 2デスクトップメモアプリです。
 通常画面はプレーンテキストのエディタだけです。起動時には必ず新しい空の本文にフォーカスします。
 
+[使い方ガイドのソース](site/index.html) · [ガイドの公開手順](docs/publishing.md) · [MIT License](LICENSE)
+
 ## 起動とビルド
 
 Bun 1.3.10、Rust、各OSの[Tauri開発環境](https://v2.tauri.app/start/prerequisites/)が必要です。
