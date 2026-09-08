@@ -36,6 +36,7 @@ setTimeout(async () => {
       check(document.activeElement === editor, "focus after new");
       key("k");
       await waitFor(() => dialog.open && document.activeElement === query, "Cmd+K focus");
+      check(getComputedStyle(query).borderRadius === "0px", "square search field");
       query.value = "needle"; query.dispatchEvent(new Event("input"));
       await waitFor(() => document.querySelector("#results button"), "full body search");
       check(document.querySelectorAll("#results button").length === 1, "one match");
@@ -64,8 +65,13 @@ setTimeout(async () => {
       check((await notes()).length === 1, "same record");
     }
     type("終了直前の本文");
-    // Native CloseRequested / ExitRequested must flush the pending debounce.
-    await invoke("smoke_done", { result: "ok" });
+    // CloseRequested hides after saving; the native harness then reopens via the Dock handler.
+    const mode = await invoke("smoke_done", { result: "ok" });
+    if (mode === "window") {
+      await waitFor(() => editor.value === "" && document.activeElement === editor && !editor.readOnly, "fresh focused note after reopening");
+      check((await notes())[0].body === "終了直前の本文", "hide persisted final input");
+      await invoke("smoke_done", { result: "reopened" });
+    }
   } catch (error) {
     await invoke("smoke_done", { result: `${String(error)}\n${error.stack ?? ""}` });
   }

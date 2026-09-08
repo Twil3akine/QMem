@@ -115,6 +115,15 @@ document.addEventListener("keydown", (event) => {
 });
 
 async function start() {
+  await listen("qmem-hide", () => action(async () => {
+    await autosave.flush();
+    await invoke("finish_hide");
+  }));
+  await listen("qmem-open", () => action(async () => {
+    editor.value = await autosave.open();
+    dialog.close();
+    await invoke("show_editor");
+  }));
   await listen("qmem-close", () => action(async () => {
     await autosave.flush();
     await invoke("finish_exit");

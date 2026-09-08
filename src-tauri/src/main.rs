@@ -46,6 +46,28 @@ fn finish_exit(app: tauri::AppHandle) {
     app.exit(0);
 }
 
+#[tauri::command]
+fn finish_hide(window: tauri::WebviewWindow) -> Result<(), String> {
+    window.hide().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn show_editor(window: tauri::WebviewWindow) -> Result<(), String> {
+    window.unminimize().map_err(|e| e.to_string())?;
+    window.show().map_err(|e| e.to_string())?;
+    window.set_focus().map_err(|e| e.to_string())
+}
+
+fn reopen(app: &tauri::AppHandle) {
+    if let Some(window) = app.get_webview_window("main") {
+        if window.is_visible().unwrap_or(false) {
+            let _ = show_editor(window);
+        } else {
+            let _ = window.emit("qmem-open", ());
+        }
+    }
+}
+
 fn main() {
     tauri::Builder::default()
         .manage(Lifecycle::default())
@@ -61,20 +83,26 @@ fn main() {
             save_note,
             search_notes,
             ready,
-            finish_exit
+            finish_exit,
+            finish_hide,
+            show_editor
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 let state = window.state::<Lifecycle>();
                 if state.ready.load(Ordering::SeqCst) && !state.exiting.load(Ordering::SeqCst) {
                     api.prevent_close();
-                    let _ = window.emit("qmem-close", ());
+                    let _ = window.emit("qmem-hide", ());
                 }
             }
         })
         .build(tauri::generate_context!())
         .expect("QMem could not start")
         .run(|app, event| {
+            #[cfg(target_os = "macos")]
+            if let tauri::RunEvent::Reopen { .. } = event {
+                reopen(app);
+            }
             if let tauri::RunEvent::ExitRequested { api, .. } = event {
                 let state = app.state::<Lifecycle>();
                 if state.ready.load(Ordering::SeqCst) && !state.exiting.load(Ordering::SeqCst) {
