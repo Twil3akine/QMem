@@ -17,15 +17,17 @@ writeFileSync(configPath, JSON.stringify(config));
 const sourcePath = join(directory, "src/main.rs");
 let source = readFileSync(sourcePath, "utf8");
 source = source.replace("let directory = app.path().app_data_dir()?;", 'let directory = std::path::PathBuf::from(std::env::var("QMEM_TEST_DIR")?);');
-source = source.replace("window.set_focus().map_err(|e| e.to_string())", `window.set_focus().map_err(|e| e.to_string())?;
-    window.eval(include_str!("native-smoke.js")).map_err(|e| e.to_string())`);
+source = source.replace("    Ok(shortcut_error)", `    assert!(shortcut_error.is_none(), "{shortcut_error:?}");
+    window.eval(include_str!("native-smoke.js")).map_err(|e| e.to_string())?;
+    Ok(shortcut_error)`);
 source = source.replace("            save_note,", "            smoke_done,\n            save_note,");
 source += `
 #[tauri::command]
 fn smoke_done(app: tauri::AppHandle, window: tauri::WebviewWindow, result: String) -> String {
     if result != "ok" && result != "reopened" { eprintln!("NATIVE FAIL: {}", result); std::process::exit(1); }
     println!("NATIVE UI PASS");
-    if result == "ok" && std::env::var("QMEM_TEST_CLOSE").unwrap() == "window" {
+    let mode = std::env::var("QMEM_TEST_CLOSE").unwrap();
+    if result == "ok" && mode != "quit" {
         window.close().unwrap();
         std::thread::spawn(move || {
             for _ in 0..100 {
@@ -34,7 +36,11 @@ fn smoke_done(app: tauri::AppHandle, window: tauri::WebviewWindow, result: Strin
                     let db = db.0.lock().unwrap();
                     assert_eq!(storage::search(&db, "").unwrap()[0].body, "終了直前の本文");
                     drop(db);
-                    reopen(&app);
+                    match mode.as_str() {
+                        "shortcut" => open_new_note(&app),
+                        "hidden-quit" => app.exit(0),
+                        _ => reopen(&app),
+                    }
                     return;
                 }
                 std::thread::sleep(std::time::Duration::from_millis(20));
@@ -55,7 +61,7 @@ function run(command, env = {}) {
 }
 const target = join(root, "src-tauri/target");
 run(["cargo", "build", "--manifest-path", join(directory, "Cargo.toml"), "--target-dir", target, "--features", "tauri/custom-protocol"]);
-for (const mode of ["window", "quit"]) {
+for (const mode of ["window", "shortcut", "hidden-quit", "quit"]) {
   run([join(target, "debug/qmem")], { QMEM_TEST_DIR: directory, QMEM_TEST_CLOSE: mode });
   const db = new Database(join(directory, "notes.sqlite3"), { readonly: true });
   const notes = db.query("SELECT body FROM notes ORDER BY id").all();

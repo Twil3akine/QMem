@@ -128,7 +128,11 @@ async function start() {
     await autosave.flush();
     await invoke("finish_exit");
   }));
-  await invoke("ready");
+  const shortcutError = await invoke("ready");
+  if (shortcutError) {
+    error.textContent = shortcutError;
+    error.hidden = false;
+  }
   editor.focus();
 }
 start().catch(reportError);

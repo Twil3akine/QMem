@@ -7,6 +7,7 @@ use std::sync::{
     Mutex,
 };
 use tauri::{Emitter, Manager};
+use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 
 struct Database(Mutex<Connection>);
 #[derive(Default)]
@@ -32,10 +33,19 @@ fn search_notes(db: tauri::State<Database>, query: String) -> Result<Vec<storage
 }
 
 #[tauri::command]
-fn ready(app: tauri::AppHandle, window: tauri::WebviewWindow) -> Result<(), String> {
+fn ready(app: tauri::AppHandle, window: tauri::WebviewWindow) -> Result<Option<String>, String> {
     app.state::<Lifecycle>().ready.store(true, Ordering::SeqCst);
+    let shortcut_error = app.global_shortcut()
+        .on_shortcut("CommandOrControl+Shift+Space", |app, _, event| {
+            if event.state() == ShortcutState::Pressed {
+                open_new_note(app);
+            }
+        })
+        .err()
+        .map(|error| format!("Shift+Cmd+Spaceを登録できませんでした。ほかのアプリとの競合を確認してください。{error}"));
     window.show().map_err(|e| e.to_string())?;
-    window.set_focus().map_err(|e| e.to_string())
+    window.set_focus().map_err(|e| e.to_string())?;
+    Ok(shortcut_error)
 }
 
 #[tauri::command]
@@ -58,18 +68,23 @@ fn show_editor(window: tauri::WebviewWindow) -> Result<(), String> {
     window.set_focus().map_err(|e| e.to_string())
 }
 
+fn open_new_note(app: &tauri::AppHandle) {
+    let _ = app.emit("qmem-open", ());
+}
+
 fn reopen(app: &tauri::AppHandle) {
     if let Some(window) = app.get_webview_window("main") {
         if window.is_visible().unwrap_or(false) {
             let _ = show_editor(window);
         } else {
-            let _ = window.emit("qmem-open", ());
+            open_new_note(app);
         }
     }
 }
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .manage(Lifecycle::default())
         .setup(|app| {
             let directory = app.path().app_data_dir()?;
