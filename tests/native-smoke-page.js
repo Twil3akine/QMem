@@ -39,6 +39,24 @@ setTimeout(async () => {
       query.value = "needle"; query.dispatchEvent(new Event("input"));
       await waitFor(() => document.querySelector("#results button"), "full body search");
       check(document.querySelectorAll("#results button").length === 1, "one match");
+      query.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", isComposing: true, bubbles: true, cancelable: true }));
+      check(dialog.open, "IME Escape does not dismiss search");
+      const queryClosed = new Promise((resolve) => dialog.addEventListener("close", resolve, { once: true }));
+      query.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+      await queryClosed;
+      await waitFor(() => !dialog.open && document.activeElement === editor && !editor.readOnly, "Escape from query returns focus");
+      check(editor.value === "", "Escape preserves current note");
+      key("k");
+      await waitFor(() => dialog.open && document.querySelector("#results button"), "reopen after Escape");
+      const result = document.querySelector("#results button");
+      result.focus();
+      const resultClosed = new Promise((resolve) => dialog.addEventListener("close", resolve, { once: true }));
+      result.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", bubbles: true, cancelable: true }));
+      await resultClosed;
+      await waitFor(() => !dialog.open && document.activeElement === editor && !editor.readOnly, "Escape from result returns focus");
+      check((await notes())[0].body.endsWith("直前"), "Escape preserves saved note");
+      key("k");
+      await waitFor(() => dialog.open && document.querySelector("#results button"), "reopen after result Escape");
       document.querySelector("#results button").click();
       await waitFor(() => !dialog.open && editor.value.includes("needle"), "open past note");
       type("過去メモの再編集");
@@ -49,6 +67,6 @@ setTimeout(async () => {
     // Native CloseRequested / ExitRequested must flush the pending debounce.
     await invoke("smoke_done", { result: "ok" });
   } catch (error) {
-    await invoke("smoke_done", { result: String(error.stack ?? error) });
+    await invoke("smoke_done", { result: `${String(error)}\n${error.stack ?? ""}` });
   }
 }, 100);

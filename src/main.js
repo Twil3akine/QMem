@@ -95,6 +95,12 @@ results.addEventListener("keydown", (event) => {
   if (event.key === "ArrowDown") { event.preventDefault(); event.target.nextElementSibling?.focus(); }
   if (event.key === "ArrowUp") { event.preventDefault(); (event.target.previousElementSibling ?? query).focus(); }
 });
+dialog.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !event.isComposing) {
+    event.preventDefault();
+    dialog.close();
+  }
+});
 dialog.addEventListener("close", () => { ++searchVersion; clearTimeout(searchTimer); editor.focus(); });
 window.addEventListener("focus", () => { if (!dialog.open) editor.focus(); });
 
