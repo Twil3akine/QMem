@@ -6,7 +6,11 @@ use std::sync::{
     atomic::{AtomicBool, Ordering},
     Mutex,
 };
-use tauri::{Emitter, Manager};
+use tauri::{
+    menu::{Menu, MenuItem},
+    tray::TrayIconBuilder,
+    Emitter, Manager,
+};
 use tauri_plugin_autostart::ManagerExt as AutostartExt;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 
@@ -91,6 +95,21 @@ fn register_global_shortcut(app: &tauri::AppHandle, shortcut: &str) -> Result<()
         .map_err(|error| format!("ショートカットを登録できませんでした。ほかのアプリとの競合を確認してください。{error}"))
 }
 
+fn apply_menu_bar_mode(app: &tauri::AppHandle, enabled: bool) -> Result<(), String> {
+    let tray = app
+        .tray_by_id("qmem")
+        .ok_or_else(|| "メニューバーアイコンを初期化できませんでした。".to_string())?;
+    tray.set_visible(enabled).map_err(|e| e.to_string())?;
+    #[cfg(target_os = "macos")]
+    app.set_activation_policy(if enabled {
+        tauri::ActivationPolicy::Accessory
+    } else {
+        tauri::ActivationPolicy::Regular
+    })
+    .map_err(|e| e.to_string())?;
+    Ok(())
+}
+
 #[tauri::command]
 fn save_app_settings(
     app: tauri::AppHandle,
@@ -116,6 +135,18 @@ fn save_app_settings(
         }
     }
 
+    if old.menu_bar_mode != settings.menu_bar_mode {
+        if let Err(error) = apply_menu_bar_mode(&app, settings.menu_bar_mode) {
+            if old.global_shortcut != settings.global_shortcut {
+                let _ = app
+                    .global_shortcut()
+                    .unregister(settings.global_shortcut.as_str());
+                let _ = register_global_shortcut(&app, &old.global_shortcut);
+            }
+            return Err(error);
+        }
+    }
+
     let result = {
         let db = db.0.lock().map_err(|e| e.to_string())?;
         storage::save_settings(&db, &settings).map_err(|e| e.to_string())
@@ -126,6 +157,9 @@ fn save_app_settings(
                 .global_shortcut()
                 .unregister(settings.global_shortcut.as_str());
             let _ = register_global_shortcut(&app, &old.global_shortcut);
+        }
+        if old.menu_bar_mode != settings.menu_bar_mode {
+            let _ = apply_menu_bar_mode(&app, old.menu_bar_mode);
         }
         return Err(error);
     }
@@ -215,7 +249,38 @@ fn main() {
             std::fs::create_dir_all(&directory)?;
             let db = Connection::open(directory.join("notes.sqlite3"))?;
             storage::initialize(&db)?;
+            let settings = storage::load_settings(&db)?;
             app.manage(Database(Mutex::new(db)));
+
+            let new_note = MenuItem::with_id(app, "new-note", "新しいメモ", true, None::<&str>)?;
+            let quit = MenuItem::with_id(app, "quit", "QMemを終了", true, None::<&str>)?;
+            let menu = Menu::with_items(app, &[&new_note, &quit])?;
+            let mut tray = TrayIconBuilder::with_id("qmem")
+                .menu(&menu)
+                .tooltip("QMem")
+                .icon_as_template(true)
+                .on_menu_event(|app, event| match event.id().as_ref() {
+                    "new-note" => open_new_note(app),
+                    "quit" => {
+                        if app.state::<Lifecycle>().ready.load(Ordering::SeqCst) {
+                            let _ = app.emit("qmem-close", ());
+                        } else {
+                            app.exit(0);
+                        }
+                    }
+                    _ => {}
+                });
+            if let Some(icon) = app.default_window_icon() {
+                tray = tray.icon(icon.clone());
+            }
+            let tray = tray.build(app)?;
+            tray.set_visible(settings.menu_bar_mode)?;
+            #[cfg(target_os = "macos")]
+            app.set_activation_policy(if settings.menu_bar_mode {
+                tauri::ActivationPolicy::Accessory
+            } else {
+                tauri::ActivationPolicy::Regular
+            });
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

@@ -16,6 +16,7 @@ const shortcutInputs = [...document.querySelectorAll(".shortcut-input")];
 const fontSize = document.querySelector("#font-size");
 const fontSizeValue = document.querySelector("#font-size-value");
 const autostart = document.querySelector("#autostart");
+const menuBarMode = document.querySelector("#menu-bar-mode");
 const settingsStatus = document.querySelector("#settings-status");
 const error = document.querySelector("#error");
 let busy = false;
@@ -104,6 +105,7 @@ function applySettings(value) {
   document.documentElement.style.setProperty("--editor-font-size", `${value.font_size}px`);
   fontSize.value = String(value.font_size);
   fontSizeValue.value = `${value.font_size}px`;
+  menuBarMode.checked = value.menu_bar_mode;
   for (const input of shortcutInputs) input.textContent = formatShortcut(value[input.dataset.shortcut]);
 }
 
@@ -189,6 +191,7 @@ autostart.addEventListener("change", async () => {
     autostart.disabled = false;
   }
 });
+menuBarMode.addEventListener("change", () => persistSettings({ ...settings, menu_bar_mode: menuBarMode.checked }));
 
 query.addEventListener("input", () => {
   // 連続入力中の検索回数を抑えるため、最後の入力から100ms後に検索する。
