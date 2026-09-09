@@ -1,6 +1,7 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
 import { Autosave } from "./autosave.js";
+import { formatShortcut, matchesShortcut, shortcutFromEvent } from "./shortcuts.js";
 import "./style.css";
 
 // 画面はメモ本文、検索ダイアログ、エラー表示の3要素で構成する。
@@ -8,10 +9,17 @@ const editor = document.querySelector("#editor");
 const dialog = document.querySelector("#search-dialog");
 const query = document.querySelector("#query");
 const results = document.querySelector("#results");
+const settingsDialog = document.querySelector("#settings-dialog");
+const settingsClose = document.querySelector("#settings-close");
+const shortcutHelp = document.querySelector("#shortcut-help");
+const shortcutInputs = [...document.querySelectorAll(".shortcut-input")];
+const fontSize = document.querySelector("#font-size");
+const fontSizeValue = document.querySelector("#font-size-value");
 const error = document.querySelector("#error");
 let busy = false;
 let searchVersion = 0;
 let searchTimer;
+let settings;
 
 // 保存と読み込みのエラーは本文を消さず、画面下部に通知する。
 function reportError(cause) {
@@ -36,7 +44,7 @@ function action(work) {
     editor.readOnly = true;
     autosave.update(editor.value);
     try { await work(); } catch (cause) { reportError(cause); }
-    finally { busy = false; editor.readOnly = false; if (!dialog.open) editor.focus(); }
+    finally { busy = false; editor.readOnly = false; if (!dialog.open && !settingsDialog.open) editor.focus(); }
   });
   return actions;
 }
@@ -83,11 +91,88 @@ function openSearch() {
     query.value = "";
     // ダイアログが静止中のポインター下へ開いても、検索結果を選択済みに見せない。
     dialog.classList.add("suppress-hover");
+    if (settingsDialog.open) settingsDialog.close();
     dialog.showModal();
     query.focus();
     await search();
   });
 }
+
+function applySettings(value) {
+  document.documentElement.style.setProperty("--editor-font-size", `${value.font_size}px`);
+  fontSize.value = String(value.font_size);
+  fontSizeValue.value = `${value.font_size}px`;
+  for (const input of shortcutInputs) input.textContent = formatShortcut(value[input.dataset.shortcut]);
+}
+
+async function persistSettings(next) {
+  const previous = settings;
+  settings = next;
+  applySettings(settings);
+  shortcutHelp.textContent = "変更する項目を押して、キーを入力します。";
+  shortcutHelp.classList.remove("error");
+  try {
+    await invoke("save_app_settings", { settings });
+  } catch (cause) {
+    settings = previous;
+    applySettings(settings);
+    shortcutHelp.textContent = String(cause);
+    shortcutHelp.classList.add("error");
+  }
+}
+
+function openSettings() {
+  return action(async () => {
+    await autosave.flush();
+    if (dialog.open) dialog.close();
+    settingsDialog.showModal();
+    shortcutInputs[0].focus();
+  });
+}
+
+for (const input of shortcutInputs) {
+  input.addEventListener("click", () => {
+    input.classList.add("recording");
+    input.textContent = "キーを入力";
+    shortcutHelp.textContent = "Escで変更をキャンセルします。";
+    shortcutHelp.classList.remove("error");
+  });
+  input.addEventListener("blur", () => {
+    input.classList.remove("recording");
+    if (settings) input.textContent = formatShortcut(settings[input.dataset.shortcut]);
+  });
+  input.addEventListener("keydown", async (event) => {
+    if (!input.classList.contains("recording")) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const shortcut = shortcutFromEvent(event);
+    if (shortcut === null) { input.blur(); input.focus(); return; }
+    if (!shortcut) return;
+    if (Object.entries(settings).some(([name, value]) => name !== input.dataset.shortcut && name.endsWith("_shortcut") && value === shortcut)) {
+      shortcutHelp.textContent = "同じショートカットは複数の操作に設定できません。";
+      shortcutHelp.classList.add("error");
+      return;
+    }
+    input.classList.remove("recording");
+    await persistSettings({ ...settings, [input.dataset.shortcut]: shortcut });
+  });
+}
+
+fontSize.addEventListener("input", () => {
+  const value = Number(fontSize.value);
+  document.documentElement.style.setProperty("--editor-font-size", `${value}px`);
+  fontSizeValue.value = `${value}px`;
+});
+fontSize.addEventListener("change", () => persistSettings({ ...settings, font_size: Number(fontSize.value) }));
+settingsClose.addEventListener("click", () => settingsDialog.close());
+settingsDialog.addEventListener("click", (event) => { if (event.target === settingsDialog) settingsDialog.close(); });
+settingsDialog.addEventListener("keydown", (event) => {
+  if (event.key === "Escape" && !event.isComposing && !document.activeElement?.classList.contains("recording")) {
+    event.preventDefault();
+    settingsDialog.close();
+  }
+});
+settingsDialog.addEventListener("close", () => editor.focus());
 
 query.addEventListener("input", () => {
   // 連続入力中の検索回数を抑えるため、最後の入力から100ms後に検索する。
@@ -122,12 +207,16 @@ window.addEventListener("focus", () => { if (!dialog.open) editor.focus(); });
 
 // macOSのCmdと他OSのCtrlのどちらでも、新規メモと検索を操作できるようにする。
 document.addEventListener("keydown", (event) => {
-  if (event.isComposing || !(event.metaKey || event.ctrlKey) || event.altKey || event.shiftKey) return;
-  const key = event.key.toLowerCase();
-  if (key === "n" || key === "k") {
+  if (event.isComposing || !settings || settingsDialog.open) return;
+  if ((event.metaKey || event.ctrlKey) && !event.altKey && !event.shiftKey && event.key === ",") {
+    event.preventDefault();
+    if (!busy) openSettings();
+    return;
+  }
+  if (matchesShortcut(event, settings.new_note_shortcut) || matchesShortcut(event, settings.search_shortcut)) {
     event.preventDefault();
     if (busy) return;
-    if (key === "n") openNote(); else openSearch();
+    if (matchesShortcut(event, settings.new_note_shortcut)) openNote(); else openSearch();
   }
 });
 
@@ -154,6 +243,8 @@ async function start() {
     error.textContent = shortcutError;
     error.hidden = false;
   }
+  settings = await invoke("load_settings");
+  applySettings(settings);
   editor.focus();
 }
 start().catch(reportError);

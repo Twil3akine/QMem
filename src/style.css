@@ -1,12 +1,27 @@
-:root { font-family: system-ui, sans-serif; font-size: 18px; color: #222; background: #fff; }
+:root { --editor-font-size: 18px; font-family: system-ui, sans-serif; font-size: 18px; color: #222; background: #fff; }
 * { box-sizing: border-box; }
 body { margin: 0; }
 /* 通常画面ではメモ欄をウィンドウ全体に広げ、ブラウザ標準の枠を見せない。 */
-#editor { display: block; width: 100%; height: 100dvh; border: 0; resize: none; outline: none; padding: 28px; color: inherit; background: inherit; font: 18px/1.7 system-ui, sans-serif; }
+#editor { display: block; width: 100%; height: 100dvh; border: 0; resize: none; outline: none; padding: 28px; color: inherit; background: inherit; font: var(--editor-font-size)/1.7 system-ui, sans-serif; }
 /* 検索ダイアログは小さいウィンドウでも画面内に収まり、結果部分だけがスクロールする。 */
 dialog { width: min(560px, calc(100% - 40px)); height: min(480px, calc(100dvh - 48px)); max-height: calc(100dvh - 48px); padding: 16px; border: 1px solid #ccc; border-radius: 8px; overflow: hidden; }
 dialog[open] { display: flex; flex-direction: column; gap: 12px; }
 dialog::backdrop { background: #0003; }
+#settings-dialog { width: min(520px, calc(100vw - 32px)); max-height: min(620px, calc(100dvh - 48px)); padding: 0; overflow-y: auto; }
+.settings-header { position: sticky; top: 0; display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid #e5e5e5; background: #fff; }
+.settings-header h1 { margin: 0; font-size: 20px; }
+#settings-close { border: 0; padding: 4px 6px; color: #666; background: transparent; font: inherit; cursor: pointer; }
+.settings-section { padding: 18px 20px; border-bottom: 1px solid #eee; }
+.settings-section:last-child { border-bottom: 0; }
+.settings-section h2 { margin: 0 0 10px; color: #666; font-size: 14px; font-weight: 600; }
+.setting-row, .font-setting { display: flex; min-height: 42px; align-items: center; justify-content: space-between; gap: 16px; }
+.shortcut-input { min-width: 118px; border: 1px solid #d5d5d5; border-radius: 5px; padding: 6px 9px; background: #fafafa; font: inherit; cursor: pointer; }
+.shortcut-input:focus { outline: 2px solid #999; outline-offset: 1px; }
+.shortcut-input.recording { color: #666; }
+.setting-help { min-height: 20px; margin: 7px 0 0; color: #777; font-size: 13px; }
+.setting-help.error { color: #9b1c1c; }
+.font-setting input { flex: 1; }
+.font-setting output { width: 48px; text-align: right; font-variant-numeric: tabular-nums; }
 /* 虫眼鏡を検索欄の内側へ重ね、その分だけ入力文字の左余白を確保する。 */
 .search-field { position: relative; flex-shrink: 0; }
 .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #666; pointer-events: none; }

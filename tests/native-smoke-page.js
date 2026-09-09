@@ -3,6 +3,7 @@ setTimeout(async () => {
   const editor = document.querySelector("#editor");
   const query = document.querySelector("#query");
   const dialog = document.querySelector("dialog");
+  const settingsDialog = document.querySelector("#settings-dialog");
   const check = (value, message) => { if (!value) throw Error(message); };
   const waitFor = async (predicate, message) => {
     for (let i = 0; i < 100; i++) {
@@ -16,6 +17,16 @@ setTimeout(async () => {
   const notes = () => invoke("search_notes", { query: "" });
   try {
     check(editor.value === "" && document.activeElement === editor, "startup blank and focused");
+    key(",");
+    await waitFor(() => settingsDialog.open, "Cmd+, opens settings");
+    check(document.querySelectorAll(".shortcut-input").length === 3, "three configurable shortcuts");
+    const size = document.querySelector("#font-size");
+    size.value = "20"; size.dispatchEvent(new Event("input", { bubbles: true })); size.dispatchEvent(new Event("change", { bubbles: true }));
+    await waitFor(async () => (await invoke("load_settings")).font_size === 20, "font size persists");
+    check(getComputedStyle(editor).fontSize === "20px", "font size applies");
+    size.value = "18"; size.dispatchEvent(new Event("change", { bubbles: true }));
+    settingsDialog.close();
+    await waitFor(() => document.activeElement === editor, "settings returns focus");
     const previous = await notes();
     // The second run verifies a fresh editor even when the database has a note.
     if (previous.length) {

@@ -10,6 +10,9 @@ cpSync(join(root, "src-tauri"), directory, {
   recursive: true,
   filter: (path) => !path.startsWith(join(root, "src-tauri/target")) && !path.startsWith(join(root, "src-tauri/gen")),
 });
+// Avoid colliding with a normal QMem process that may already own Option+Space.
+const storagePath = join(directory, "src/storage.rs");
+writeFileSync(storagePath, readFileSync(storagePath, "utf8").replaceAll("Option+Space", "CommandOrControl+Option+Shift+F12"));
 const configPath = join(directory, "tauri.conf.json");
 const config = JSON.parse(readFileSync(configPath, "utf8"));
 config.build.frontendDist = join(root, "dist");

@@ -19,6 +19,21 @@
       </div>
       <div id="results" aria-label="検索結果"></div>
     </dialog>
+    <!-- Cmd+, で必要な場合だけ開く設定。通常画面には管理UIを残さない。 -->
+    <dialog id="settings-dialog" aria-labelledby="settings-title">
+      <div class="settings-header"><h1 id="settings-title">設定</h1><button id="settings-close" type="button" aria-label="設定を閉じる">Esc</button></div>
+      <section class="settings-section" aria-labelledby="shortcuts-title">
+        <h2 id="shortcuts-title">ショートカット</h2>
+        <label class="setting-row"><span>QMemを呼び出す</span><button class="shortcut-input" type="button" data-shortcut="global_shortcut"></button></label>
+        <label class="setting-row"><span>新規メモ</span><button class="shortcut-input" type="button" data-shortcut="new_note_shortcut"></button></label>
+        <label class="setting-row"><span>過去メモ検索</span><button class="shortcut-input" type="button" data-shortcut="search_shortcut"></button></label>
+        <p id="shortcut-help" class="setting-help">変更する項目を押して、キーを入力します。</p>
+      </section>
+      <section class="settings-section" aria-labelledby="appearance-title">
+        <h2 id="appearance-title">表示</h2>
+        <label class="font-setting"><span>文字サイズ</span><input id="font-size" type="range" min="15" max="24" step="1" /><output id="font-size-value" for="font-size"></output></label>
+      </section>
+    </dialog>
     <!-- 保存・読み込みに失敗した場合だけ表示する通知領域。 -->
     <p id="error" role="alert" hidden></p>
     <script type="module" src="/src/main.js"></script>

@@ -7,7 +7,7 @@ use std::sync::{
     Mutex,
 };
 use tauri::{Emitter, Manager};
-use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
+use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 
 // SQLite接続をTauriの共有状態として保持し、同時アクセスはMutexで直列化する。
 struct Database(Mutex<Connection>);
@@ -17,6 +17,7 @@ struct Database(Mutex<Connection>);
 struct Lifecycle {
     ready: AtomicBool,
     exiting: AtomicBool,
+    global_shortcut: Mutex<Option<String>>,
 }
 
 // JavaScriptから呼ばれるコマンド。保存結果として、新規採番されたIDまたは削除後のNoneを返す。
@@ -37,19 +38,106 @@ fn search_notes(db: tauri::State<Database>, query: String) -> Result<Vec<storage
     storage::search(&db, &query).map_err(|e| e.to_string())
 }
 
-// JavaScript側のイベント購読完了後に呼ばれ、ショートカット登録と初回表示を行う。
 #[tauri::command]
-fn ready(app: tauri::AppHandle, window: tauri::WebviewWindow) -> Result<Option<String>, String> {
-    app.state::<Lifecycle>().ready.store(true, Ordering::SeqCst);
-    let shortcut_error = app.global_shortcut()
-        .on_shortcut("Option+Space", |app, _, event| {
-            // キーを離したイベントでは二重に開かないよう、押下時だけ処理する。
+fn load_settings(db: tauri::State<Database>) -> Result<storage::Settings, String> {
+    let db = db.0.lock().map_err(|e| e.to_string())?;
+    storage::load_settings(&db).map_err(|e| e.to_string())
+}
+
+fn validate_settings(settings: &storage::Settings) -> Result<(), String> {
+    if !(15..=24).contains(&settings.font_size) {
+        return Err("文字サイズは15pxから24pxの間で指定してください。".into());
+    }
+    let shortcuts = [
+        &settings.global_shortcut,
+        &settings.new_note_shortcut,
+        &settings.search_shortcut,
+    ];
+    if shortcuts[0] == shortcuts[1] || shortcuts[0] == shortcuts[2] || shortcuts[1] == shortcuts[2]
+    {
+        return Err("同じショートカットを複数の操作には設定できません。".into());
+    }
+    for shortcut in shortcuts {
+        shortcut
+            .parse::<Shortcut>()
+            .map_err(|_| "このキーの組み合わせは使用できません。".to_string())?;
+    }
+    Ok(())
+}
+
+fn register_global_shortcut(app: &tauri::AppHandle, shortcut: &str) -> Result<(), String> {
+    app.global_shortcut()
+        .on_shortcut(shortcut, |app, _, event| {
             if event.state() == ShortcutState::Pressed {
                 open_new_note(app);
             }
         })
-        .err()
-        .map(|error| format!("Option+Spaceを登録できませんでした。ほかのアプリとの競合を確認してください。{error}"));
+        .map_err(|error| format!("ショートカットを登録できませんでした。ほかのアプリとの競合を確認してください。{error}"))
+}
+
+#[tauri::command]
+fn save_app_settings(
+    app: tauri::AppHandle,
+    db: tauri::State<Database>,
+    settings: storage::Settings,
+) -> Result<(), String> {
+    validate_settings(&settings)?;
+    let old = {
+        let db = db.0.lock().map_err(|e| e.to_string())?;
+        storage::load_settings(&db).map_err(|e| e.to_string())?
+    };
+
+    if old.global_shortcut != settings.global_shortcut {
+        register_global_shortcut(&app, &settings.global_shortcut)?;
+        if let Err(error) = app
+            .global_shortcut()
+            .unregister(old.global_shortcut.as_str())
+        {
+            let _ = app
+                .global_shortcut()
+                .unregister(settings.global_shortcut.as_str());
+            return Err(error.to_string());
+        }
+    }
+
+    let result = {
+        let db = db.0.lock().map_err(|e| e.to_string())?;
+        storage::save_settings(&db, &settings).map_err(|e| e.to_string())
+    };
+    if let Err(error) = result {
+        if old.global_shortcut != settings.global_shortcut {
+            let _ = app
+                .global_shortcut()
+                .unregister(settings.global_shortcut.as_str());
+            let _ = register_global_shortcut(&app, &old.global_shortcut);
+        }
+        return Err(error);
+    }
+    *app.state::<Lifecycle>()
+        .global_shortcut
+        .lock()
+        .map_err(|e| e.to_string())? = Some(settings.global_shortcut);
+    Ok(())
+}
+
+// JavaScript側のイベント購読完了後に呼ばれ、ショートカット登録と初回表示を行う。
+#[tauri::command]
+fn ready(app: tauri::AppHandle, window: tauri::WebviewWindow) -> Result<Option<String>, String> {
+    app.state::<Lifecycle>().ready.store(true, Ordering::SeqCst);
+    let shortcut = {
+        let db = app.state::<Database>();
+        let db = db.0.lock().map_err(|e| e.to_string())?;
+        storage::load_settings(&db)
+            .map_err(|e| e.to_string())?
+            .global_shortcut
+    };
+    let shortcut_error = register_global_shortcut(&app, &shortcut).err();
+    if shortcut_error.is_none() {
+        *app.state::<Lifecycle>()
+            .global_shortcut
+            .lock()
+            .map_err(|e| e.to_string())? = Some(shortcut);
+    }
     window.show().map_err(|e| e.to_string())?;
     window.set_focus().map_err(|e| e.to_string())?;
     Ok(shortcut_error)
@@ -110,6 +198,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             save_note,
             search_notes,
+            load_settings,
+            save_app_settings,
             ready,
             finish_exit,
             finish_hide,
