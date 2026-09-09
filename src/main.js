@@ -28,6 +28,7 @@ let busy = false;
 let searchVersion = 0;
 let searchTimer;
 let settings;
+let settingsWrites = Promise.resolve();
 
 // 保存と読み込みのエラーは本文を消さず、画面下部に通知する。
 function reportError(cause) {
@@ -120,14 +121,12 @@ async function persistSettings(next) {
   applySettings(settings);
   shortcutHelp.textContent = "変更する項目を押して、キーを入力します。";
   shortcutHelp.classList.remove("error");
-  try {
-    await invoke("save_app_settings", { settings });
-  } catch (cause) {
-    settings = previous;
-    applySettings(settings);
+  settingsWrites = settingsWrites.then(() => invoke("save_app_settings", { settings: next })).catch((cause) => {
+    if (settings === next) { settings = previous; applySettings(settings); }
     shortcutHelp.textContent = String(cause);
     shortcutHelp.classList.add("error");
-  }
+  });
+  return settingsWrites;
 }
 
 function openSettings() {
@@ -222,7 +221,13 @@ checkUpdate.addEventListener("click", async () => {
     checkUpdate.disabled = false;
   }
 });
-openReleases.addEventListener("click", () => openUrl("https://github.com/Twil3akine/QMem/releases"));
+openReleases.addEventListener("click", async () => {
+  try {
+    await openUrl("https://github.com/Twil3akine/QMem/releases");
+  } catch (cause) {
+    updateResult.textContent = `ダウンロードページを開けませんでした。${String(cause)}`;
+  }
+});
 
 query.addEventListener("input", () => {
   // 連続入力中の検索回数を抑えるため、最後の入力から100ms後に検索する。
@@ -253,7 +258,7 @@ dialog.addEventListener("keydown", (event) => {
 });
 dialog.addEventListener("close", () => { ++searchVersion; clearTimeout(searchTimer); editor.focus(); });
 dialog.addEventListener("pointermove", () => dialog.classList.remove("suppress-hover"));
-window.addEventListener("focus", () => { if (!dialog.open) editor.focus(); });
+window.addEventListener("focus", () => { if (!dialog.open && !settingsDialog.open) editor.focus(); });
 
 // macOSのCmdと他OSのCtrlのどちらでも、新規メモと検索を操作できるようにする。
 document.addEventListener("keydown", (event) => {
@@ -280,6 +285,7 @@ async function start() {
   await listen("qmem-open", () => action(async () => {
     editor.value = await autosave.open();
     dialog.close();
+    settingsDialog.close();
     await invoke("show_editor");
   }));
   // アプリ終了要求でも、保留中の入力を保存してから実際に終了する。
