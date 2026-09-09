@@ -2,6 +2,7 @@ use rusqlite::{params, Connection};
 use serde::Serialize;
 use std::time::{SystemTime, UNIX_EPOCH};
 
+// Tauriが検索結果をJavaScriptへ渡せるよう、Serialize可能な形でメモを表す。
 #[derive(Debug, Serialize)]
 pub struct Note {
     pub id: i64,
@@ -11,6 +12,7 @@ pub struct Note {
 }
 
 pub fn initialize(db: &Connection) -> rusqlite::Result<()> {
+    // 一時的なロックは待機し、WALと完全同期で異常終了時のデータ消失を抑える。
     db.busy_timeout(std::time::Duration::from_secs(5))?;
     db.execute_batch(
         "PRAGMA journal_mode = WAL; PRAGMA synchronous = FULL;
@@ -24,6 +26,8 @@ pub fn initialize(db: &Connection) -> rusqlite::Result<()> {
 }
 
 pub fn save(db: &Connection, id: Option<i64>, body: &str) -> rusqlite::Result<Option<i64>> {
+    // 空白だけの新規メモは保存せず、既存メモならレコード自体を削除する。
+    // BOMも画面には見えないため、空白と同じものとして扱う。
     if body
         .trim_matches(|c: char| c.is_whitespace() || c == '\u{feff}')
         .is_empty()
@@ -33,20 +37,24 @@ pub fn save(db: &Connection, id: Option<i64>, body: &str) -> rusqlite::Result<Op
         }
         return Ok(None);
     }
+    // JavaScriptのDateへそのまま渡せるよう、日時はUnix epochからのミリ秒で記録する。
     let now = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap_or_default()
         .as_millis() as i64;
     if let Some(id) = id {
+        // IDがあるメモは作成日時を維持し、本文と更新日時だけを書き換える。
         let changed = db.execute(
             "UPDATE notes SET body = ?1, updated_at = ?2 WHERE id = ?3",
             params![body, now, id],
         )?;
         if changed == 0 {
+            // 存在しないIDを暗黙に新規作成せず、呼び出し元へ不整合を通知する。
             return Err(rusqlite::Error::QueryReturnedNoRows);
         }
         Ok(Some(id))
     } else {
+        // 新規メモを作成し、以後の更新で使うSQLiteの採番IDを返す。
         db.execute(
             "INSERT INTO notes (body, created_at, updated_at) VALUES (?1, ?2, ?2)",
             params![body, now],
@@ -56,7 +64,8 @@ pub fn save(db: &Connection, id: Option<i64>, body: &str) -> rusqlite::Result<Op
 }
 
 pub fn search(db: &Connection, query: &str) -> rusqlite::Result<Vec<Note>> {
-    // instr treats %, _, quotes and all other input as literal text.
+    // instrを使うことで、%、_、引用符なども検索構文ではなく文字として扱う。
+    // 空の検索語では全件を返し、作成日時とIDの新しい順に並べる。
     let mut statement = db.prepare(
         "SELECT id, body, created_at, updated_at FROM notes
         WHERE instr(lower(body), lower(?1)) > 0 OR ?1 = '' ORDER BY created_at DESC, id DESC",

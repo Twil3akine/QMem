@@ -6,7 +6,9 @@
     <title>QMem</title>
   </head>
   <body>
+    <!-- 通常画面では、このテキストエリアだけを画面全体に表示する。 -->
     <textarea id="editor" aria-label="メモ本文" autofocus spellcheck="false"></textarea>
+    <!-- Cmd/Ctrl+K で開く、過去メモ検索用のモーダル。 -->
     <dialog id="search-dialog" aria-label="過去メモ検索">
       <div class="search-field">
         <svg class="search-icon" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -17,6 +19,7 @@
       </div>
       <div id="results" aria-label="検索結果"></div>
     </dialog>
+    <!-- 保存・読み込みに失敗した場合だけ表示する通知領域。 -->
     <p id="error" role="alert" hidden></p>
     <script type="module" src="/src/main.js"></script>
   </body>

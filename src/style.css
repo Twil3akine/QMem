@@ -1,19 +1,24 @@
 :root { font-family: system-ui, sans-serif; font-size: 18px; color: #222; background: #fff; }
 * { box-sizing: border-box; }
 body { margin: 0; }
+/* 通常画面ではメモ欄をウィンドウ全体に広げ、ブラウザ標準の枠を見せない。 */
 #editor { display: block; width: 100%; height: 100dvh; border: 0; resize: none; outline: none; padding: 28px; color: inherit; background: inherit; font: 18px/1.7 system-ui, sans-serif; }
+/* 検索ダイアログは小さいウィンドウでも画面内に収まり、結果部分だけがスクロールする。 */
 dialog { width: min(560px, calc(100% - 40px)); height: min(480px, calc(100dvh - 48px)); max-height: calc(100dvh - 48px); padding: 16px; border: 1px solid #ccc; border-radius: 8px; overflow: hidden; }
 dialog[open] { display: flex; flex-direction: column; gap: 12px; }
 dialog::backdrop { background: #0003; }
+/* 虫眼鏡を検索欄の内側へ重ね、その分だけ入力文字の左余白を確保する。 */
 .search-field { position: relative; flex-shrink: 0; }
 .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #666; pointer-events: none; }
 #query { width: 100%; padding: 10px 10px 10px 36px; font: inherit; appearance: none; border: 1px solid #aaa; border-radius: 0; }
 #query::-webkit-search-decoration { display: none; }
 #query:focus { outline: 2px solid Highlight; outline-offset: 1px; }
+/* 件数が増えても検索欄を固定し、検索結果だけを縦にスクロールする。 */
 #results { flex: 1; min-height: 0; overflow-y: auto; scrollbar-gutter: stable; padding: 2px; }
 #results button { display: block; width: 100%; padding: 12px 8px; border: 0; border-bottom: 1px solid #eee; background: transparent; text-align: left; font: inherit; cursor: pointer; }
 #results button:hover, #results button:focus-visible { background: #f2f2f2; }
 #results button:focus-visible { outline: none; }
 #results time { display: block; color: #666; font-size: 14px; margin-bottom: 4px; }
 #results span { display: block; overflow-wrap: anywhere; white-space: pre-wrap; }
+/* エラーは編集中の本文を覆い尽くさないよう、画面下部へ固定表示する。 */
 #error { position: fixed; bottom: 12px; left: 20px; right: 20px; margin: 0; padding: 12px; background: #fff1f0; color: #9b1c1c; }
