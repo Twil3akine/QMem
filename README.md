@@ -1,9 +1,9 @@
 # QMem
 
-開く → 書く → 自動保存、だけのTauri 2デスクトップメモアプリです。
+「開く → 書く」だけの、Tauri 2で作ったmacOS向けデスクトップメモアプリです。
 通常画面はプレーンテキストのエディタだけです。起動時には必ず新しい空の本文にフォーカスします。
 
-[使い方ガイドのソース](site/index.html) · [ガイドの公開手順](docs/publishing.md) · [MIT License](LICENSE)
+[MIT License](LICENSE)で公開しています。
 
 ## 起動とビルド
 
@@ -27,7 +27,7 @@ macOSアプリを生成する場合です。
 bun run tauri build
 ```
 
-生成先は `src-tauri/target/release/bundle/macos/QMem.app` です。
+生成先は `src-tauri/target/release/bundle/macos/` 以下の `QMem.app` とDMGです。
 `bun run dev` はフロントエンド開発サーバーのみで、SQLite操作にはTauri内での起動が必要です。
 
 ## 操作

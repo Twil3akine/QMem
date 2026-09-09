@@ -83,7 +83,7 @@
       </section>
 
       <section id="install" class="section" aria-labelledby="install-title">
-        <div class="section-heading"><p class="eyebrow">04 / セットアップ</p><h2 id="install-title">Macで使いはじめる。</h2><p>現在はソースコードからビルドして利用できます。<br />配布用アプリのリリースは、まだ公開していません。</p></div>
+        <div class="section-heading"><p class="eyebrow">04 / セットアップ</p><h2 id="install-title">Macで使いはじめる。</h2><p>配布用アプリは<a href="https://github.com/Twil3akine/QMem/releases">GitHub Releases</a>で公開します。<br />ソースコードからビルドして利用することもできます。</p></div>
         <details class="install-details">
           <summary>ソースコードからの導入手順</summary>
           <div class="details-body">
@@ -91,10 +91,9 @@
             <pre><code>git clone https://github.com/Twil3akine/QMem.git
 cd QMem
 bun install
-bun run tauri build
-codesign --force --deep --sign - src-tauri/target/release/bundle/macos/QMem.app</code></pre>
-            <p>生成された <code>src-tauri/target/release/bundle/macos/QMem.app</code> を「アプリケーション」フォルダへ移し、開きます。</p>
-            <p class="muted">最後のコマンドは、自分のMacで使うためのローカル署名です。開発用に起動する場合は <code>bun run tauri dev</code> を使います。Developer ID署名・公証を伴う配布手順は、現時点では用意していません。</p>
+APPLE_SIGNING_IDENTITY="-" bun run tauri build</code></pre>
+            <p>生成された <code>src-tauri/target/release/bundle/macos/</code> 以下のDMGを開き、QMemを「アプリケーション」フォルダへ移します。</p>
+            <p class="muted"><code>APPLE_SIGNING_IDENTITY="-"</code>は、自分のMacで使うためのアドホック署名です。開発用に起動する場合は <code>bun run tauri dev</code> を使います。Developer ID署名・公証には対応していません。</p>
           </div>
         </details>
       </section>
