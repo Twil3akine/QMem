@@ -1,5 +1,5 @@
 use rusqlite::{params, Connection};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 // Tauriが検索結果をJavaScriptへ渡せるよう、Serialize可能な形でメモを表す。
@@ -9,6 +9,28 @@ pub struct Note {
     pub body: String,
     pub created_at: i64,
     pub updated_at: i64,
+}
+
+// UI設定は1行だけ保持し、メモ本文のモデルとは分離する。
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+pub struct Settings {
+    pub global_shortcut: String,
+    pub new_note_shortcut: String,
+    pub search_shortcut: String,
+    pub font_size: i64,
+    pub menu_bar_mode: bool,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            global_shortcut: "Option+Space".into(),
+            new_note_shortcut: "CommandOrControl+N".into(),
+            search_shortcut: "CommandOrControl+K".into(),
+            font_size: 18,
+            menu_bar_mode: false,
+        }
+    }
 }
 
 pub fn initialize(db: &Connection) -> rusqlite::Result<()> {
@@ -21,8 +43,50 @@ pub fn initialize(db: &Connection) -> rusqlite::Result<()> {
             body TEXT NOT NULL,
             created_at INTEGER NOT NULL,
             updated_at INTEGER NOT NULL
-        );",
+        );
+        CREATE TABLE IF NOT EXISTS settings (
+            id INTEGER PRIMARY KEY CHECK (id = 1),
+            global_shortcut TEXT NOT NULL,
+            new_note_shortcut TEXT NOT NULL,
+            search_shortcut TEXT NOT NULL,
+            font_size INTEGER NOT NULL,
+            menu_bar_mode INTEGER NOT NULL
+        );
+        INSERT OR IGNORE INTO settings VALUES
+            (1, 'Option+Space', 'CommandOrControl+N', 'CommandOrControl+K', 18, 0);",
     )
+}
+
+pub fn load_settings(db: &Connection) -> rusqlite::Result<Settings> {
+    db.query_row(
+        "SELECT global_shortcut, new_note_shortcut, search_shortcut, font_size, menu_bar_mode
+         FROM settings WHERE id = 1",
+        [],
+        |row| {
+            Ok(Settings {
+                global_shortcut: row.get(0)?,
+                new_note_shortcut: row.get(1)?,
+                search_shortcut: row.get(2)?,
+                font_size: row.get(3)?,
+                menu_bar_mode: row.get(4)?,
+            })
+        },
+    )
+}
+
+pub fn save_settings(db: &Connection, settings: &Settings) -> rusqlite::Result<()> {
+    db.execute(
+        "UPDATE settings SET global_shortcut = ?1, new_note_shortcut = ?2,
+         search_shortcut = ?3, font_size = ?4, menu_bar_mode = ?5 WHERE id = 1",
+        params![
+            settings.global_shortcut,
+            settings.new_note_shortcut,
+            settings.search_shortcut,
+            settings.font_size,
+            settings.menu_bar_mode
+        ],
+    )?;
+    Ok(())
 }
 
 pub fn save(db: &Connection, id: Option<i64>, body: &str) -> rusqlite::Result<Option<i64>> {
@@ -128,5 +192,22 @@ mod tests {
             assert_eq!(search(&db, "").unwrap()[0].body, "終了直前の本文");
         }
         std::fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn settings_have_defaults_and_persist() {
+        let db = Connection::open_in_memory().unwrap();
+        initialize(&db).unwrap();
+        assert_eq!(load_settings(&db).unwrap(), Settings::default());
+
+        let changed = Settings {
+            global_shortcut: "CommandOrControl+Shift+Space".into(),
+            new_note_shortcut: "CommandOrControl+Shift+N".into(),
+            search_shortcut: "CommandOrControl+Shift+K".into(),
+            font_size: 21,
+            menu_bar_mode: true,
+        };
+        save_settings(&db, &changed).unwrap();
+        assert_eq!(load_settings(&db).unwrap(), changed);
     }
 }
