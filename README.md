@@ -39,14 +39,21 @@ bun run tauri build
 - `Cmd+K`：過去メモの本文検索を開きます。空の検索語では全件を作成日時の降順で表示します。
   - 検索結果の `↑` / `↓`：結果間を移動します。`Enter`：選択したメモを開きます。
 - `Esc`：検索欄・検索結果のどちらからでも検索を閉じ、本文へフォーカスを戻します。IME変換中のキーイベントは処理しません。
+- `Cmd+,`：検索と同じオーバーレイ形式の設定を開きます。
+
+設定では、呼び出し・新規メモ・検索の3ショートカットと本文の文字サイズを変更できます。
+「ログイン時に起動」を有効にすると、ログイン後は画面を出さずにQMemを起動します。
+「メニューバーに常駐」を有効にすると、Dockの代わりにメニューバーへアイコンを表示します。
+更新確認は操作したときだけGitHub Releasesへ接続し、新しい版があればダウンロードページを案内します。
 
 通常のテキスト編集ショートカットは標準textareaとOSの編集メニューを使用します。
 Markdownは文字列として入力できますが、解釈しません。
 
 ## 保存
 
-RustのrusqliteからローカルSQLiteへ保存します。テーブルは `notes` のみで、
-`id`、`body`、`created_at`、`updated_at` を保持します。日時はUnix epochからのミリ秒です。
+RustのrusqliteからローカルSQLiteへ保存します。`notes` テーブルは
+`id`、`body`、`created_at`、`updated_at` を保持します。設定は1行だけの `settings` テーブルへ
+分離して保存します。メモの日時はUnix epochからのミリ秒です。
 macOSの保存先は `~/Library/Application Support/app.qmem.desktop/notes.sqlite3` です。
 SQLiteのWALと `synchronous=FULL` を使用します。
 

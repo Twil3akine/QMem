@@ -47,7 +47,7 @@
         <ol class="steps">
           <li><span class="step-number" aria-hidden="true">01</span><h3>開く</h3><p>QMemを起動すると、新しい空のメモが開きます。クリックせずに、そのまま入力できます。</p></li>
           <li><span class="step-number" aria-hidden="true">02</span><h3>書く</h3><p>タイトルも、保存先の選択もありません。ひとことでも、長い文章でも、本文に書くだけです。</p></li>
-          <li><span class="step-number" aria-hidden="true">03</span><h3>閉じる</h3><p>保存ボタンはありません。<kbd>⌘ W</kbd> で閉じる前にも自動保存され、アプリはDockに残ります。</p></li>
+          <li><span class="step-number" aria-hidden="true">03</span><h3>閉じる</h3><p>保存ボタンはありません。<kbd>⌘ W</kbd> で閉じる前にも自動保存され、初期設定ではアプリがDockに残ります。</p></li>
         </ol>
         <p class="note">別のメモを書きたいときは <kbd>⌘ N</kbd>。今の内容を保存して、空のメモへ移ります。</p>
       </section>
@@ -71,6 +71,7 @@
             <tbody>
               <tr><th scope="row"><kbd>⌘ N</kbd></th><td>新しい空のメモを開く</td></tr>
               <tr><th scope="row"><kbd>⌘ K</kbd></th><td>過去のメモを検索する</td></tr>
+              <tr><th scope="row"><kbd>⌘ ,</kbd></th><td>設定を開く</td></tr>
               <tr><th scope="row"><kbd>Esc</kbd></th><td>検索を閉じ、本文へ戻る</td></tr>
               <tr><th scope="row"><kbd>↓</kbd> <kbd>↑</kbd></th><td>検索結果を移動する</td></tr>
               <tr><th scope="row"><kbd>Enter</kbd></th><td>選択した検索結果を開く</td></tr>
@@ -79,7 +80,7 @@
             </tbody>
           </table>
         </div>
-        <p class="note">検索欄で <kbd>↓</kbd> を押すと結果へ移動し、<kbd>Enter</kbd> なら先頭の結果を開きます。コピー・貼り付けなどは普段どおりの操作です。</p>
+        <p class="note">検索欄で <kbd>↓</kbd> を押すと結果へ移動し、<kbd>Enter</kbd> なら先頭の結果を開きます。<kbd>⌘ ,</kbd> の設定では、3つのショートカット、文字サイズ、ログイン時起動、メニューバー常駐を変更し、更新を手動で確認できます。</p>
       </section>
 
       <section id="install" class="section" aria-labelledby="install-title">
@@ -106,6 +107,7 @@ APPLE_SIGNING_IDENTITY="-" bun run tauri build</code></pre>
           <details><summary>空のメモや、本文を全部消したメモはどうなりますか？</summary><div class="details-body"><p>空、または空白だけのメモは保存されません。過去のメモも、本文をすべて消すと保存先から削除されます。ごみ箱や履歴から戻す機能はありません。</p></div></details>
           <details><summary>Markdownは使えますか？</summary><div class="details-body"><p><code>#</code> や <code>-</code> などを文字として入力できます。装飾やプレビューには変換しません。プレーンテキストのメモアプリです。</p></div></details>
           <details><summary>呼び出しショートカットが効きません。</summary><div class="details-body"><p>まずQMemが起動しているか確認してください。<kbd>⌘ Q</kbd> で完全終了している場合は、先にアプリを開きます。登録エラーが表示された場合は、ほかのアプリが同じショートカットを使っていないか確認してください。</p></div></details>
+          <details><summary>Dockではなくメニューバーへ置けますか？</summary><div class="details-body"><p><kbd>⌘ ,</kbd> で設定を開き、「メニューバーに常駐」を有効にします。メニューバーのQMemアイコンから、新しいメモを開くかアプリを完全終了できます。</p></div></details>
           <details><summary>終了する直前に書いた内容も保存されますか？</summary><div class="details-body"><p>通常のウィンドウ閉鎖・アプリ終了では、保存完了を待ってから閉じます。保存に失敗した場合は、本文を残したままエラーを表示します。強制終了や電源断では、この保存待ち処理は働きません。</p></div></details>
         </div>
       </section>
