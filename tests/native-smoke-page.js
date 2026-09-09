@@ -40,6 +40,9 @@ setTimeout(async () => {
       query.value = "needle"; query.dispatchEvent(new Event("input"));
       await waitFor(() => document.querySelector("#results button"), "full body search");
       check(document.querySelectorAll("#results button").length === 1, "one match");
+      check(document.activeElement === query && dialog.classList.contains("suppress-hover"), "search opens without highlighting a result");
+      dialog.dispatchEvent(new PointerEvent("pointermove", { bubbles: true }));
+      check(!dialog.classList.contains("suppress-hover"), "result hover enabled after pointer movement");
       query.dispatchEvent(new KeyboardEvent("keydown", { key: "Escape", isComposing: true, bubbles: true, cancelable: true }));
       check(dialog.open, "IME Escape does not dismiss search");
       const queryClosed = new Promise((resolve) => dialog.addEventListener("close", resolve, { once: true }));

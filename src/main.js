@@ -79,6 +79,8 @@ function openSearch() {
     // 検索に入る前の入力も検索対象になるよう、保留中の保存を完了させる。
     await autosave.flush();
     query.value = "";
+    // ダイアログが静止中のポインター下へ開いても、検索結果を選択済みに見せない。
+    dialog.classList.add("suppress-hover");
     dialog.showModal();
     query.focus();
     await search();
@@ -113,6 +115,7 @@ dialog.addEventListener("keydown", (event) => {
   }
 });
 dialog.addEventListener("close", () => { ++searchVersion; clearTimeout(searchTimer); editor.focus(); });
+dialog.addEventListener("pointermove", () => dialog.classList.remove("suppress-hover"));
 window.addEventListener("focus", () => { if (!dialog.open) editor.focus(); });
 
 // macOSのCmdと他OSのCtrlのどちらでも、新規メモと検索を操作できるようにする。
