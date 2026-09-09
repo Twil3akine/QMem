@@ -19,6 +19,8 @@ dialog::backdrop { background: #0003; }
 .setting-row small { display: block; margin-top: 3px; color: #777; font-size: 13px; }
 .toggle { width: 34px; height: 20px; flex: 0 0 auto; accent-color: #333; }
 .shortcut-input { min-width: 118px; border: 1px solid #d5d5d5; border-radius: 5px; padding: 6px 9px; background: #fafafa; font: inherit; cursor: pointer; }
+.setting-button { flex: 0 0 auto; border: 1px solid #d5d5d5; border-radius: 5px; padding: 7px 10px; background: #fafafa; font: inherit; cursor: pointer; }
+.setting-button:disabled { cursor: wait; opacity: .65; }
 .shortcut-input:focus { outline: 2px solid #999; outline-offset: 1px; }
 .shortcut-input.recording { color: #666; }
 .setting-help { min-height: 20px; margin: 7px 0 0; color: #777; font-size: 13px; }
@@ -26,6 +28,7 @@ dialog::backdrop { background: #0003; }
 .font-setting input { flex: 1; }
 .font-setting output { width: 48px; text-align: right; font-variant-numeric: tabular-nums; }
 .settings-status { margin: 0; padding: 12px 20px; color: #9b1c1c; font-size: 13px; }
+.release-link { border: 0; margin-top: 8px; padding: 0; color: #444; background: transparent; font: inherit; text-decoration: underline; cursor: pointer; }
 /* 虫眼鏡を検索欄の内側へ重ね、その分だけ入力文字の左余白を確保する。 */
 .search-field { position: relative; flex-shrink: 0; }
 .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #666; pointer-events: none; }

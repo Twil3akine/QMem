@@ -11,7 +11,7 @@
   },
   "app": {
     "windows": [{ "label": "main", "title": "QMem", "width": 700, "height": 560, "minWidth": 320, "minHeight": 240, "visible": false }],
-    "security": { "csp": "default-src 'self'; script-src 'self'; style-src 'self'; connect-src ipc: http://ipc.localhost; img-src 'self' asset: http://asset.localhost" }
+    "security": { "csp": "default-src 'self'; script-src 'self'; style-src 'self'; connect-src ipc: http://ipc.localhost https://api.github.com; img-src 'self' asset: http://asset.localhost" }
   },
   "bundle": { "active": true, "targets": ["app", "dmg"], "icon": ["icons/32x32.png"] }
 }

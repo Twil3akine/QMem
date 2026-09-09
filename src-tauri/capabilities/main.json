@@ -2,5 +2,12 @@
   "identifier": "main",
   "description": "Receive the save-before-exit request in the main window.",
   "windows": ["main"],
-  "permissions": ["core:event:allow-listen", "core:event:allow-unlisten"]
+  "permissions": [
+    "core:event:allow-listen",
+    "core:event:allow-unlisten",
+    {
+      "identifier": "opener:allow-open-url",
+      "allow": [{ "url": "https://github.com/Twil3akine/QMem/releases" }]
+    }
+  ]
 }

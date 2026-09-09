@@ -55,6 +55,11 @@ fn autostart_enabled(app: tauri::AppHandle) -> Result<bool, String> {
 }
 
 #[tauri::command]
+fn app_version(app: tauri::AppHandle) -> String {
+    app.package_info().version.to_string()
+}
+
+#[tauri::command]
 fn set_autostart(app: tauri::AppHandle, enabled: bool) -> Result<(), String> {
     if enabled {
         app.autolaunch().enable()
@@ -237,6 +242,7 @@ fn reopen(app: &tauri::AppHandle) {
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_autostart::init(
             tauri_plugin_autostart::MacosLauncher::LaunchAgent,
             Some(vec!["--autostart"]),
@@ -288,6 +294,7 @@ fn main() {
             search_notes,
             load_settings,
             autostart_enabled,
+            app_version,
             set_autostart,
             save_app_settings,
             ready,

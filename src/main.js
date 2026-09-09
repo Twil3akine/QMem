@@ -1,7 +1,9 @@
 import { invoke } from "@tauri-apps/api/core";
 import { listen } from "@tauri-apps/api/event";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { Autosave } from "./autosave.js";
 import { formatShortcut, matchesShortcut, shortcutFromEvent } from "./shortcuts.js";
+import { isNewerVersion } from "./updates.js";
 import "./style.css";
 
 // 画面はメモ本文、検索ダイアログ、エラー表示の3要素で構成する。
@@ -18,6 +20,9 @@ const fontSizeValue = document.querySelector("#font-size-value");
 const autostart = document.querySelector("#autostart");
 const menuBarMode = document.querySelector("#menu-bar-mode");
 const settingsStatus = document.querySelector("#settings-status");
+const checkUpdate = document.querySelector("#check-update");
+const updateResult = document.querySelector("#update-result");
+const openReleases = document.querySelector("#open-releases");
 const error = document.querySelector("#error");
 let busy = false;
 let searchVersion = 0;
@@ -192,6 +197,32 @@ autostart.addEventListener("change", async () => {
   }
 });
 menuBarMode.addEventListener("change", () => persistSettings({ ...settings, menu_bar_mode: menuBarMode.checked }));
+checkUpdate.addEventListener("click", async () => {
+  checkUpdate.disabled = true;
+  openReleases.hidden = true;
+  updateResult.textContent = "更新を確認しています…";
+  try {
+    const [current, response] = await Promise.all([
+      invoke("app_version"),
+      fetch("https://api.github.com/repos/Twil3akine/QMem/releases/latest", {
+        headers: { Accept: "application/vnd.github+json" },
+      }),
+    ]);
+    if (!response.ok) throw new Error(`GitHubから応答を取得できませんでした（${response.status}）`);
+    const release = await response.json();
+    if (isNewerVersion(current, release.tag_name)) {
+      updateResult.textContent = `QMem ${release.tag_name}を利用できます。`;
+      openReleases.hidden = false;
+    } else {
+      updateResult.textContent = `最新版です（QMem v${current}）。`;
+    }
+  } catch (cause) {
+    updateResult.textContent = `更新を確認できませんでした。${String(cause)}`;
+  } finally {
+    checkUpdate.disabled = false;
+  }
+});
+openReleases.addEventListener("click", () => openUrl("https://github.com/Twil3akine/QMem/releases"));
 
 query.addEventListener("input", () => {
   // 連続入力中の検索回数を抑えるため、最後の入力から100ms後に検索する。

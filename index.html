@@ -38,6 +38,11 @@
         <h2 id="appearance-title">表示</h2>
         <label class="font-setting"><span>文字サイズ</span><input id="font-size" type="range" min="15" max="24" step="1" /><output id="font-size-value" for="font-size"></output></label>
       </section>
+      <section class="settings-section" aria-labelledby="update-title">
+        <h2 id="update-title">更新</h2>
+        <div class="setting-row"><span><span class="setting-label">QMemの更新</span><small id="update-result">必要なときだけGitHubへ確認します。</small></span><button id="check-update" class="setting-button" type="button">更新を確認</button></div>
+        <button id="open-releases" class="release-link" type="button" hidden>ダウンロードページを開く</button>
+      </section>
       <p id="settings-status" class="settings-status" role="status" hidden></p>
     </dialog>
     <!-- 保存・読み込みに失敗した場合だけ表示する通知領域。 -->
