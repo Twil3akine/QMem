@@ -15,6 +15,8 @@ const shortcutHelp = document.querySelector("#shortcut-help");
 const shortcutInputs = [...document.querySelectorAll(".shortcut-input")];
 const fontSize = document.querySelector("#font-size");
 const fontSizeValue = document.querySelector("#font-size-value");
+const autostart = document.querySelector("#autostart");
+const settingsStatus = document.querySelector("#settings-status");
 const error = document.querySelector("#error");
 let busy = false;
 let searchVersion = 0;
@@ -173,6 +175,20 @@ settingsDialog.addEventListener("keydown", (event) => {
   }
 });
 settingsDialog.addEventListener("close", () => editor.focus());
+autostart.addEventListener("change", async () => {
+  const enabled = autostart.checked;
+  autostart.disabled = true;
+  settingsStatus.hidden = true;
+  try {
+    await invoke("set_autostart", { enabled });
+  } catch (cause) {
+    autostart.checked = !enabled;
+    settingsStatus.textContent = `ログイン時起動を変更できませんでした。${String(cause)}`;
+    settingsStatus.hidden = false;
+  } finally {
+    autostart.disabled = false;
+  }
+});
 
 query.addEventListener("input", () => {
   // 連続入力中の検索回数を抑えるため、最後の入力から100ms後に検索する。
@@ -245,6 +261,7 @@ async function start() {
   }
   settings = await invoke("load_settings");
   applySettings(settings);
+  autostart.checked = await invoke("autostart_enabled");
   editor.focus();
 }
 start().catch(reportError);

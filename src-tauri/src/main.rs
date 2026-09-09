@@ -7,6 +7,7 @@ use std::sync::{
     Mutex,
 };
 use tauri::{Emitter, Manager};
+use tauri_plugin_autostart::ManagerExt as AutostartExt;
 use tauri_plugin_global_shortcut::{GlobalShortcutExt, Shortcut, ShortcutState};
 
 // SQLite接続をTauriの共有状態として保持し、同時アクセスはMutexで直列化する。
@@ -42,6 +43,21 @@ fn search_notes(db: tauri::State<Database>, query: String) -> Result<Vec<storage
 fn load_settings(db: tauri::State<Database>) -> Result<storage::Settings, String> {
     let db = db.0.lock().map_err(|e| e.to_string())?;
     storage::load_settings(&db).map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn autostart_enabled(app: tauri::AppHandle) -> Result<bool, String> {
+    app.autolaunch().is_enabled().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+fn set_autostart(app: tauri::AppHandle, enabled: bool) -> Result<(), String> {
+    if enabled {
+        app.autolaunch().enable()
+    } else {
+        app.autolaunch().disable()
+    }
+    .map_err(|e| e.to_string())
 }
 
 fn validate_settings(settings: &storage::Settings) -> Result<(), String> {
@@ -138,8 +154,11 @@ fn ready(app: tauri::AppHandle, window: tauri::WebviewWindow) -> Result<Option<S
             .lock()
             .map_err(|e| e.to_string())? = Some(shortcut);
     }
-    window.show().map_err(|e| e.to_string())?;
-    window.set_focus().map_err(|e| e.to_string())?;
+    // ログイン項目からの起動では、ショートカットだけ準備して画面を奪わない。
+    if !std::env::args().any(|argument| argument == "--autostart") {
+        window.show().map_err(|e| e.to_string())?;
+        window.set_focus().map_err(|e| e.to_string())?;
+    }
     Ok(shortcut_error)
 }
 
@@ -184,6 +203,10 @@ fn reopen(app: &tauri::AppHandle) {
 
 fn main() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_autostart::init(
+            tauri_plugin_autostart::MacosLauncher::LaunchAgent,
+            Some(vec!["--autostart"]),
+        ))
         .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .manage(Lifecycle::default())
         .setup(|app| {
@@ -199,6 +222,8 @@ fn main() {
             save_note,
             search_notes,
             load_settings,
+            autostart_enabled,
+            set_autostart,
             save_app_settings,
             ready,
             finish_exit,
