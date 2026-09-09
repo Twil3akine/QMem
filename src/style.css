@@ -8,13 +8,14 @@ dialog { width: min(560px, calc(100% - 40px)); height: min(480px, calc(100dvh - 
 dialog[open] { display: flex; flex-direction: column; gap: 12px; }
 dialog::backdrop { background: #0003; }
 #settings-dialog { width: min(520px, calc(100vw - 32px)); max-height: min(620px, calc(100dvh - 48px)); padding: 0; overflow-y: auto; }
-.settings-header { position: sticky; top: 0; display: flex; align-items: center; justify-content: space-between; padding: 18px 20px; border-bottom: 1px solid #e5e5e5; background: #fff; }
+.settings-header { position: sticky; top: 0; display: flex; align-items: center; padding: 18px 20px; border-bottom: 1px solid #e5e5e5; background: #fff; }
 .settings-header h1 { margin: 0; font-size: 20px; }
-#settings-close { border: 0; padding: 4px 6px; color: #666; background: transparent; font: inherit; cursor: pointer; }
 .settings-section { padding: 18px 20px; border-bottom: 1px solid #eee; }
 .settings-section:last-child { border-bottom: 0; }
 .settings-section h2 { margin: 0 0 10px; color: #666; font-size: 14px; font-weight: 600; }
 .setting-row, .font-setting { display: flex; min-height: 42px; align-items: center; justify-content: space-between; gap: 16px; }
+.setting-row + .setting-row { margin-top: 14px; }
+#general-title + .setting-row + .setting-row { margin-top: 20px; }
 .setting-label { display: block; }
 .setting-row small { display: block; margin-top: 3px; color: #777; font-size: 13px; }
 .toggle { width: 34px; height: 20px; flex: 0 0 auto; accent-color: #333; }

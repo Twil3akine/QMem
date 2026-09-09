@@ -20,6 +20,14 @@ setTimeout(async () => {
     key(",");
     await waitFor(() => settingsDialog.open, "Cmd+, opens settings");
     check(document.querySelectorAll(".shortcut-input").length === 3, "three configurable shortcuts");
+    const newNoteShortcut = document.querySelector('[data-shortcut="new_note_shortcut"]');
+    newNoteShortcut.click();
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "N", code: "KeyN", metaKey: true, shiftKey: true, bubbles: true, cancelable: true }));
+    await waitFor(async () => (await invoke("load_settings")).new_note_shortcut === "CommandOrControl+Shift+N", "shortcut persists");
+    check(newNoteShortcut.textContent === "⌘ ⇧ N", "updated shortcut is shown");
+    newNoteShortcut.click();
+    document.dispatchEvent(new KeyboardEvent("keydown", { key: "n", code: "KeyN", metaKey: true, bubbles: true, cancelable: true }));
+    await waitFor(async () => (await invoke("load_settings")).new_note_shortcut === "CommandOrControl+N", "shortcut restores");
     const size = document.querySelector("#font-size");
     size.value = "20"; size.dispatchEvent(new Event("input", { bubbles: true })); size.dispatchEvent(new Event("change", { bubbles: true }));
     await waitFor(async () => (await invoke("load_settings")).font_size === 20, "font size persists");

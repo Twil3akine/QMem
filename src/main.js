@@ -12,7 +12,6 @@ const dialog = document.querySelector("#search-dialog");
 const query = document.querySelector("#query");
 const results = document.querySelector("#results");
 const settingsDialog = document.querySelector("#settings-dialog");
-const settingsClose = document.querySelector("#settings-close");
 const shortcutHelp = document.querySelector("#shortcut-help");
 const shortcutInputs = [...document.querySelectorAll(".shortcut-input")];
 const fontSize = document.querySelector("#font-size");
@@ -29,6 +28,7 @@ let searchVersion = 0;
 let searchTimer;
 let settings;
 let settingsWrites = Promise.resolve();
+let recordingShortcutInput;
 
 // 保存と読み込みのエラーは本文を消さず、画面下部に通知する。
 function reportError(cause) {
@@ -138,33 +138,46 @@ function openSettings() {
   });
 }
 
+function stopShortcutRecording() {
+  if (!recordingShortcutInput) return;
+  recordingShortcutInput.classList.remove("recording");
+  if (settings) recordingShortcutInput.textContent = formatShortcut(settings[recordingShortcutInput.dataset.shortcut]);
+  recordingShortcutInput = undefined;
+}
+
 for (const input of shortcutInputs) {
   input.addEventListener("click", () => {
+    stopShortcutRecording();
+    recordingShortcutInput = input;
     input.classList.add("recording");
     input.textContent = "キーを入力";
     shortcutHelp.textContent = "Escで変更をキャンセルします。";
     shortcutHelp.classList.remove("error");
   });
-  input.addEventListener("blur", () => {
-    input.classList.remove("recording");
-    if (settings) input.textContent = formatShortcut(settings[input.dataset.shortcut]);
-  });
-  input.addEventListener("keydown", async (event) => {
-    if (!input.classList.contains("recording")) return;
+}
+
+document.addEventListener("keydown", async (event) => {
+  if (recordingShortcutInput) {
     event.preventDefault();
-    event.stopPropagation();
+    event.stopImmediatePropagation();
     const shortcut = shortcutFromEvent(event);
-    if (shortcut === null) { input.blur(); input.focus(); return; }
+    if (shortcut === null) {
+      stopShortcutRecording();
+      shortcutHelp.textContent = "変更する項目を押して、キーを入力します。";
+      return;
+    }
     if (!shortcut) return;
+    const input = recordingShortcutInput;
     if (Object.entries(settings).some(([name, value]) => name !== input.dataset.shortcut && name.endsWith("_shortcut") && value === shortcut)) {
       shortcutHelp.textContent = "同じショートカットは複数の操作に設定できません。";
       shortcutHelp.classList.add("error");
       return;
     }
+    recordingShortcutInput = undefined;
     input.classList.remove("recording");
     await persistSettings({ ...settings, [input.dataset.shortcut]: shortcut });
-  });
-}
+  }
+}, true);
 
 fontSize.addEventListener("input", () => {
   const value = Number(fontSize.value);
@@ -172,15 +185,14 @@ fontSize.addEventListener("input", () => {
   fontSizeValue.value = `${value}px`;
 });
 fontSize.addEventListener("change", () => persistSettings({ ...settings, font_size: Number(fontSize.value) }));
-settingsClose.addEventListener("click", () => settingsDialog.close());
 settingsDialog.addEventListener("click", (event) => { if (event.target === settingsDialog) settingsDialog.close(); });
 settingsDialog.addEventListener("keydown", (event) => {
-  if (event.key === "Escape" && !event.isComposing && !document.activeElement?.classList.contains("recording")) {
+  if (event.key === "Escape" && !event.isComposing) {
     event.preventDefault();
     settingsDialog.close();
   }
 });
-settingsDialog.addEventListener("close", () => editor.focus());
+settingsDialog.addEventListener("close", () => { stopShortcutRecording(); editor.focus(); });
 autostart.addEventListener("change", async () => {
   const enabled = autostart.checked;
   autostart.disabled = true;

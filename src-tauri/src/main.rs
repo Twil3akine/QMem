@@ -261,9 +261,11 @@ fn main() {
             let new_note = MenuItem::with_id(app, "new-note", "新しいメモ", true, None::<&str>)?;
             let quit = MenuItem::with_id(app, "quit", "QMemを終了", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&new_note, &quit])?;
-            let mut tray = TrayIconBuilder::with_id("qmem")
+            let tray_icon = tauri::image::Image::from_bytes(include_bytes!("../icons/tray.png"))?;
+            let tray = TrayIconBuilder::with_id("qmem")
                 .menu(&menu)
                 .tooltip("QMem")
+                .icon(tray_icon)
                 .icon_as_template(true)
                 .on_menu_event(|app, event| match event.id().as_ref() {
                     "new-note" => open_new_note(app),
@@ -276,9 +278,6 @@ fn main() {
                     }
                     _ => {}
                 });
-            if let Some(icon) = app.default_window_icon() {
-                tray = tray.icon(icon.clone());
-            }
             let tray = tray.build(app)?;
             tray.set_visible(settings.menu_bar_mode)?;
             #[cfg(target_os = "macos")]
@@ -329,4 +328,18 @@ fn main() {
                 }
             }
         });
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn accepts_configurable_shortcuts() {
+        let mut settings = storage::Settings::default();
+        settings.global_shortcut = "CommandOrControl+Option+Space".into();
+        settings.new_note_shortcut = "CommandOrControl+Shift+N".into();
+        settings.search_shortcut = "CommandOrControl+Shift+K".into();
+        assert!(validate_settings(&settings).is_ok());
+    }
 }

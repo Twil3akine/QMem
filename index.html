@@ -21,7 +21,7 @@
     </dialog>
     <!-- Cmd+, で必要な場合だけ開く設定。通常画面には管理UIを残さない。 -->
     <dialog id="settings-dialog" aria-labelledby="settings-title">
-      <div class="settings-header"><h1 id="settings-title">設定</h1><button id="settings-close" type="button" aria-label="設定を閉じる">Esc</button></div>
+      <div class="settings-header"><h1 id="settings-title">設定</h1></div>
       <section class="settings-section" aria-labelledby="general-title">
         <h2 id="general-title">一般</h2>
         <label class="setting-row"><span><span class="setting-label">ログイン時に起動</span><small>画面を開かず、QMemを使える状態にします。</small></span><input id="autostart" class="toggle" type="checkbox" role="switch" /></label>
@@ -29,9 +29,9 @@
       </section>
       <section class="settings-section" aria-labelledby="shortcuts-title">
         <h2 id="shortcuts-title">ショートカット</h2>
-        <label class="setting-row"><span>QMemを呼び出す</span><button class="shortcut-input" type="button" data-shortcut="global_shortcut"></button></label>
-        <label class="setting-row"><span>新規メモ</span><button class="shortcut-input" type="button" data-shortcut="new_note_shortcut"></button></label>
-        <label class="setting-row"><span>過去メモ検索</span><button class="shortcut-input" type="button" data-shortcut="search_shortcut"></button></label>
+        <div class="setting-row"><span>QMemを呼び出す</span><button class="shortcut-input" type="button" data-shortcut="global_shortcut"></button></div>
+        <div class="setting-row"><span>新規メモ</span><button class="shortcut-input" type="button" data-shortcut="new_note_shortcut"></button></div>
+        <div class="setting-row"><span>過去メモ検索</span><button class="shortcut-input" type="button" data-shortcut="search_shortcut"></button></div>
         <p id="shortcut-help" class="setting-help">変更する項目を押して、キーを入力します。</p>
       </section>
       <section class="settings-section" aria-labelledby="appearance-title">
