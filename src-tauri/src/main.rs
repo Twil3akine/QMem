@@ -42,14 +42,14 @@ fn search_notes(db: tauri::State<Database>, query: String) -> Result<Vec<storage
 fn ready(app: tauri::AppHandle, window: tauri::WebviewWindow) -> Result<Option<String>, String> {
     app.state::<Lifecycle>().ready.store(true, Ordering::SeqCst);
     let shortcut_error = app.global_shortcut()
-        .on_shortcut("CommandOrControl+Shift+Space", |app, _, event| {
+        .on_shortcut("Option+Space", |app, _, event| {
             // キーを離したイベントでは二重に開かないよう、押下時だけ処理する。
             if event.state() == ShortcutState::Pressed {
                 open_new_note(app);
             }
         })
         .err()
-        .map(|error| format!("Shift+Cmd+Spaceを登録できませんでした。ほかのアプリとの競合を確認してください。{error}"));
+        .map(|error| format!("Option+Spaceを登録できませんでした。ほかのアプリとの競合を確認してください。{error}"));
     window.show().map_err(|e| e.to_string())?;
     window.set_focus().map_err(|e| e.to_string())?;
     Ok(shortcut_error)
