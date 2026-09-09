@@ -40,6 +40,7 @@ setTimeout(async () => {
       query.value = "needle"; query.dispatchEvent(new Event("input"));
       await waitFor(() => document.querySelector("#results button"), "full body search");
       check(document.querySelectorAll("#results button").length === 1, "one match");
+      check(document.querySelector("#results span").textContent === "先頭...", "result shows only the first line");
       check(document.activeElement === query && dialog.classList.contains("suppress-hover"), "search opens without highlighting a result");
       dialog.dispatchEvent(new PointerEvent("pointermove", { bubbles: true }));
       check(!dialog.classList.contains("suppress-hover"), "result hover enabled after pointer movement");

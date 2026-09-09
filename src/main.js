@@ -59,14 +59,16 @@ async function search() {
     if (version !== searchVersion || !dialog.open) return;
     results.replaceChildren();
     if (!notes.length) { results.textContent = "メモが見つかりません"; return; }
-    // HTML文字列ではなくtextContentを使い、本文をそのまま安全にプレビューする。
+    // 本文の1行目だけをタイトルとして表示し、続きがあることは省略記号で示す。
     for (const note of notes) {
       const button = document.createElement("button");
       const time = document.createElement("time");
       time.dateTime = new Date(note.created_at).toISOString();
       time.textContent = new Date(note.created_at).toLocaleString();
       const preview = document.createElement("span");
-      preview.textContent = note.body.slice(0, 140);
+      const firstLine = note.body.split(/\r?\n/, 1)[0];
+      const title = firstLine.slice(0, 140);
+      preview.textContent = title + (note.body.length > title.length ? "..." : "");
       button.append(time, preview);
       button.addEventListener("click", () => { if (!busy) openNote(note); });
       results.append(button);
