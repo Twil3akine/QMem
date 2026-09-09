@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="description" content="QMemは、開く・書く・自動保存だけのシンプルなメモアプリです。Macでの使い方、過去メモの検索、キーボードショートカットをご紹介します。" />
+    <meta name="description" content="QMemは、開く・書く・自動保存だけのシンプルなメモアプリです。Macでの使い方、過去メモの検索、ショートカットや起動方法の設定をご紹介します。" />
     <meta name="theme-color" content="#f7f7f2" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="QMem — 思いついたら、そのまま書く。" />
@@ -20,6 +20,7 @@
       <nav aria-label="メインナビゲーション">
         <a href="#guide">使い方</a>
         <a href="#shortcuts">ショートカット</a>
+        <a href="#settings">設定</a>
         <a href="https://github.com/Twil3akine/QMem">GitHub <span aria-hidden="true">↗</span></a>
       </nav>
     </header>
@@ -80,11 +81,21 @@
             </tbody>
           </table>
         </div>
-        <p class="note">検索欄で <kbd>↓</kbd> を押すと結果へ移動し、<kbd>Enter</kbd> なら先頭の結果を開きます。<kbd>⌘ ,</kbd> の設定では、3つのショートカット、文字サイズ、ログイン時起動、メニューバー常駐を変更し、更新を手動で確認できます。</p>
+        <p class="note">検索欄で <kbd>↓</kbd> を押すと結果へ移動し、<kbd>Enter</kbd> なら先頭の結果を開きます。呼び出し・新規メモ・検索のショートカットは設定から変更できます。</p>
+      </section>
+
+      <section id="settings" class="section" aria-labelledby="settings-title">
+        <div class="section-heading"><p class="eyebrow">04 / 必要なところだけ</p><h2 id="settings-title">使い方に合わせて、<br />静かに整える。</h2><p><kbd>⌘ ,</kbd> で設定を開きます。設定は通常画面に残らず、閉じると本文へフォーカスが戻ります。</p></div>
+        <div class="settings-grid">
+          <article><h3>起動と常駐</h3><p>ログイン後に画面を出さず起動できます。Dockの代わりにメニューバーへ常駐させると、QMemのアイコンから新しいメモを開くか完全終了できます。</p></article>
+          <article><h3>3つのショートカット</h3><p>呼び出し、新規メモ、検索のキーを変更できます。変更したいキー表示を押し、次に使う組み合わせを入力します。同じ組み合わせの重複登録はできません。</p></article>
+          <article><h3>文字サイズと更新</h3><p>本文を15〜24pxの範囲で読みやすい大きさに変更できます。更新は必要なときだけ確認し、新しい版があればGitHub Releasesを開きます。</p></article>
+        </div>
+        <p class="note">設定はキーボードの <kbd>Esc</kbd> でも閉じられます。更新のダウンロードとインストールは自動では行いません。</p>
       </section>
 
       <section id="install" class="section" aria-labelledby="install-title">
-        <div class="section-heading"><p class="eyebrow">04 / セットアップ</p><h2 id="install-title">Macで使いはじめる。</h2><p>配布用アプリは<a href="https://github.com/Twil3akine/QMem/releases">GitHub Releases</a>で公開します。<br />ソースコードからビルドして利用することもできます。</p></div>
+        <div class="section-heading"><p class="eyebrow">05 / セットアップ</p><h2 id="install-title">Macで使いはじめる。</h2><p>配布用アプリは<a href="https://github.com/Twil3akine/QMem/releases">GitHub Releases</a>で公開します。<br />ソースコードからビルドして利用することもできます。</p></div>
         <details class="install-details">
           <summary>ソースコードからの導入手順</summary>
           <div class="details-body">
@@ -100,13 +111,13 @@ APPLE_SIGNING_IDENTITY="-" bun run tauri build</code></pre>
       </section>
 
       <section id="faq" class="section" aria-labelledby="faq-title">
-        <div class="section-heading"><p class="eyebrow">05 / 知っておきたいこと</p><h2 id="faq-title">迷ったときは。</h2></div>
+        <div class="section-heading"><p class="eyebrow">06 / 知っておきたいこと</p><h2 id="faq-title">迷ったときは。</h2></div>
         <div class="faq-list">
           <details><summary>メモはどこに保存されますか？</summary><div class="details-body"><p>お使いのMac内に保存されます。アカウント登録やクラウド同期はありません。保存先は <code>~/Library/Application Support/app.qmem.desktop/notes.sqlite3</code> です。</p></div></details>
           <details><summary>前に書いていたメモが、起動時に出てこないのですが？</summary><div class="details-body"><p>起動時はいつも新しい空のメモです。保存したメモは <kbd>⌘ K</kbd> から探せます。<kbd>⌘ W</kbd> で閉じた後にDockから開き直したときも、新しいメモになります。</p></div></details>
           <details><summary>空のメモや、本文を全部消したメモはどうなりますか？</summary><div class="details-body"><p>空、または空白だけのメモは保存されません。過去のメモも、本文をすべて消すと保存先から削除されます。ごみ箱や履歴から戻す機能はありません。</p></div></details>
           <details><summary>Markdownは使えますか？</summary><div class="details-body"><p><code>#</code> や <code>-</code> などを文字として入力できます。装飾やプレビューには変換しません。プレーンテキストのメモアプリです。</p></div></details>
-          <details><summary>呼び出しショートカットが効きません。</summary><div class="details-body"><p>まずQMemが起動しているか確認してください。<kbd>⌘ Q</kbd> で完全終了している場合は、先にアプリを開きます。登録エラーが表示された場合は、ほかのアプリが同じショートカットを使っていないか確認してください。</p></div></details>
+          <details><summary>呼び出しショートカットが効きません。</summary><div class="details-body"><p>まずQMemが起動しているか確認してください。<kbd>⌘ Q</kbd> で完全終了している場合は、先にアプリを開きます。登録エラーが表示された場合は、ほかのアプリが同じショートカットを使っていないか確認するか、<kbd>⌘ ,</kbd> の設定から別の組み合わせへ変更してください。</p></div></details>
           <details><summary>Dockではなくメニューバーへ置けますか？</summary><div class="details-body"><p><kbd>⌘ ,</kbd> で設定を開き、「メニューバーに常駐」を有効にします。メニューバーのQMemアイコンから、新しいメモを開くかアプリを完全終了できます。</p></div></details>
           <details><summary>終了する直前に書いた内容も保存されますか？</summary><div class="details-body"><p>通常のウィンドウ閉鎖・アプリ終了では、保存完了を待ってから閉じます。保存に失敗した場合は、本文を残したままエラーを表示します。強制終了や電源断では、この保存待ち処理は働きません。</p></div></details>
         </div>

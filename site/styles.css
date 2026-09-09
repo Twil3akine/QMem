@@ -45,6 +45,10 @@ kbd { display: inline-block; background: #fff; border: 1px solid var(--line); bo
 .shortcut-callout { background: #ecefe5; padding: 28px; }
 .shortcut-callout .big-keys { margin: 24px 0; }
 .big-keys kbd { padding: 8px 12px; font-size: 21px; }
+.settings-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 40px; }
+.settings-grid article { border-top: 2px solid #6c7a63; padding-top: 16px; }
+.settings-grid h3 { margin-top: 0; }
+.settings-grid p { color: var(--muted); font-size: 17px; margin-bottom: 0; }
 .muted { color: var(--muted); font-size: 15px; }
 table { border-collapse: collapse; width: 100%; font-size: 16px; text-align: left; }
 caption { text-align: left; font-size: 15px; color: var(--muted); margin-bottom: 16px; }
@@ -78,7 +82,7 @@ pre code { overflow-wrap: normal; }
   .steps { grid-template-columns: 1fr; gap: 24px; }
   .steps h3 { display: inline-block; margin-left: 16px; }
   .steps p { margin-top: 0; }
-  .search-section, .shortcut-layout { grid-template-columns: 1fr; gap: 24px; }
+  .search-section, .shortcut-layout, .settings-grid { grid-template-columns: 1fr; gap: 24px; }
   .section { padding: 44px 0; }
   h2 { font-size: 28px; }
   .closing { align-items: flex-start; flex-direction: column; padding: 36px 0; }
